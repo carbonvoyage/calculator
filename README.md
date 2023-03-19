@@ -1,4 +1,4 @@
-# Carbon Voyage: Data
+# Carbon Voyage: Calculator
 
 ## Features
 
