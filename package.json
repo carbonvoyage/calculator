@@ -1,31 +1,9 @@
 {
-    "name": "carbon-voyage",
+    "name": "data",
     "version": "0.0.0",
-    "private": true,
+    "license": "MIT",
+    "main": "app.py",
     "scripts": {
-        "build": "turbo run build",
-        "dev": "turbo run dev --parallel",
-        "clean": "turbo run clean && rm -rf node_modules && rm -rf .turbo && rm -rf apps/web/node_modules && rm -rf apps/web/.next && rm -rf apps/extension/node_modules",
-        "lint": "turbo run lint",
-        "format": "prettier --write \"**/*.{ts,tsx,md}\""
-    },
-    "devDependencies": {
-        "eslint": "^8.32.0",
-        "eslint-config-custom": "workspace:^0.0.0",
-        "prettier": "^2.8.3",
-        "turbo": "^1.7.0"
-    },
-    "engines": {
-        "node": ">=v16.18.1"
-    },
-    "packageManager": "pnpm@7.25.0",
-    "pnpm": {
-        "packageExtensions": {
-            "eslint-config-next@*": {
-                "dependencies": {
-                    "next": "*"
-                }
-            }
-        }
+        "dev": "env FLASK_DEBUG=true flask run"
     }
 }
