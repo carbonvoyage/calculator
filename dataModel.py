@@ -15,20 +15,23 @@ import math
 rawData_df = pd.read_csv("WinnipegData.csv", usecols= ['Category 3', 'Title', 'Unit', 'Emission Factor', 'Uncertainty'])
 
 def getLowestFactor(materials):
-    currentLowestFactor = {}
+    materialEmissionFactors = {}
+
+    # Get the lowest factor for each material
     for material in materials:
         materialFactor = math.inf
         for index, row in rawData_df.iterrows():
             if material.lower() in row['Category 3'].lower() or material.lower() in row['Title'].lower():
                 if float(row['Emission Factor']) < materialFactor:
                     materialFactor = row['Emission Factor']
-        currentLowestFactor[material] = materialFactor
-        
-    for item in currentLowestFactor:
-        if currentLowestFactor[item] == math.inf:
-            currentLowestFactor[item] = min(currentLowestFactor.values())
+        materialEmissionFactors[material] = materialFactor
+    
+    # If the item is not found, tack the lowest emission factor to it
+    for item in materialEmissionFactors:
+        if materialEmissionFactors[item] == math.inf:
+            materialEmissionFactors[item] = min(materialEmissionFactors.values())
 
-    return currentLowestFactor
+    return materialEmissionFactors
                 
 def getCarbonOutputs(materials, weight):
     totalCarbonOutput = 0
