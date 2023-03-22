@@ -14,7 +14,7 @@ class LivingArea(Enum):
         return f'For a(n) {self.name} community, Amazon drives an average of {self.value} mile(s) per stop.'
     
 CO2kgPerMileDriven = .32888 # kg of carbon emissions per 1 mile by Amazon Car :  https://www.cars-data.com/en/mercedes-benz-sprinter/co2-emissions 
-pricePerCO2kg = .01 # $ to offset 1kg : https://www.mercycorps.org/blog/how-much-offset-your-carbon
+pricePerCO2kg = .02 # $ to offset 1kg : https://www.mercycorps.org/blog/how-much-offset-your-carbon
 
 @app.route("/")
 def predictCO2OffsetPrice(livingArea : Enum, numProducts : int):

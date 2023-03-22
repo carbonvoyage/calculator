@@ -12,6 +12,22 @@ import math
 # goal 5 -> make a REST API
 # goal 6 -> account for edge cases (materials not in database, materials with multiple factors, etc.), more complicated/nuanced calculations
 
+# Conversions:
+# step 1: (Amazon mass unit) -> kg
+# step 2 (optional): (kg) -> listed dataset unit
+# step 3: (listed unit) -> kg carbon
+
+# For step 2: (_kg -> _listed unit)
+#          example: 1kg -> 2.7 kwh
+
+# https://carbonfund.org/calculation-methods/#:~:text=We%20calculate%20emissions%20from%20electricity,0.371%20kgs%20CO2e%20per%20kWh).
+# 1 lb = 0.45359237 kg
+# 1 kg = 2.69542 kwh CO2
+# 1 kg = 1 kg
+# 1 kg = 1.47 L (liters)
+# 1 kg = 0.001 tonne
+# 1 kg = 0.001 m3
+
 rawData_df = pd.read_csv("WinnipegData.csv", usecols= ['Category 3', 'Title', 'Unit', 'Emission Factor', 'Uncertainty'])
 
 def getLowestFactor(materials):
