@@ -6,9 +6,9 @@
 
 - See app.py for the calculations used for shipping your product as well as the callable api of the backend.
 
-##
+## To deploy the backend:
 
-npm start is used to run the backend.
+npm start
 
 
 ## References
