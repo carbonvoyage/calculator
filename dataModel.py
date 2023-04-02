@@ -21,11 +21,21 @@ TODO:
 '''
 
 # https://carbonfund.org/calculation-methods/#:~:text=We%20calculate%20emissions%20from%20electricity,0.371%20kgs%20CO2e%20per%20kWh).
-lbPerKg = 0.45359237
-kWhperKg = 2.69542
+kgPerLb = 0.45359237 # pounds
+kgPerkWh = 0.371 # kilowatt hours
+kgPerL = 0.85 # liters
+kgPerTon = 907.185 # tons
+kgPerTonne = 1000 # tonnes
+kgPerM3 = 1000 # meters cubed
+kgPerG = 0.001 # grams
+kgPerOz = 0.0283495 # ounces
+
+kWhperKg = 2.69542 # kilowatt hours
 LperKg = 1.47  # liters
 tonnePerKg = 0.001
 m3PerKg = 0.001  # meters cubed
+gPerKg = 1000 # grams
+ozPerKg = 35.274 # ounces
 
 # kg of carbon emissions per 1 mile by Amazon Car :  https://www.cars-data.com/en/mercedes-benz-sprinter/co2-emissions
 CO2kgPerMileDriven = .32888
@@ -33,73 +43,106 @@ CO2kgPerMileDriven = .32888
 pricePerCO2kg = .02
 
 rawData_df = pd.read_csv("WinnipegData.csv", usecols=['Category 3',
-                                                      'Title',
-                                                      'Unit',
-                                                      'Emission Factor',
-                                                      'Uncertainty'])
+                                                    'Title',
+                                                    'Unit',
+                                                    'Emission Factor',
+                                                    'Uncertainty'])
+class DataModel:
+    def convertToKg(self, unit, amount):
+        unit = unit.lower()
+        match unit:
+            case 'lb':
+                amount = amount * kgPerLb
+            case 'pound':
+                amount = amount * kgPerLb
+            case 'pounds':
+                amount = amount * kgPerLb
+            case 'kwh':
+                amount = amount * kgPerkWh
+            case 'l':
+                amount = amount * kgPerL
+            case 'liter':
+                amount = amount * kgPerL
+            case 'liters':
+                amount = amount * kgPerL
+            case 'litre':
+                amount = amount * kgPerL
+            case 'litres':
+                amount = amount * kgPerL
+            case 'tonne':
+                amount = amount * kgPerTonne
+            case 'ton':
+                amount = amount * kgPerTon
+            case 'm3':
+                amount = amount * kgPerM3
+            case 'g':
+                amount = amount * kgPerG
+            case 'gram':
+                amount = amount * kgPerG
+            case 'oz':
+                amount = amount * kgPerOz
+            case 'ounces':
+                amount = amount * kgPerOz
+            case 'kg':
+                pass
+            case _:
+                print("Unaccounted for unit", unit)
+        return amount
+
+    def getLowestFactors(self, materials):
+        materialEmissionFactors = {}
+
+        # Get the lowest factor for each material
+        for material in materials:
+            material = material.lower()
+            materialFactor = math.inf
+            for index, row in rawData_df.iterrows():
+                if material in row['Category 3'].lower() or material in row['Title'].lower():
+                    # Convert units to kg
+                    row['Emission Factor'] = self.convertToKg(row['Unit'], row['Emission Factor'])
+
+                    # Replace emisssion factor if it is lower
+                    if float(row['Emission Factor']) <= materialFactor:
+                        materialFactor = float(row['Emission Factor'])
+                        materialEmissionFactors[material] = materialFactor
+        
+        # If the item is not found, tack the lowest emission factor to it
+        for material in materials:
+            if material not in materialEmissionFactors:
+                if len(materialEmissionFactors) > 0:
+                    materialEmissionFactors[material] = (sum(materialEmissionFactors.values())
+                                                /len(materialEmissionFactors))
+                else:
+                    commonEmmissionFactor = 1.2 # random number
+                    materialEmissionFactors[material] = commonEmmissionFactor
+
+        return materialEmissionFactors
+
+    def getTotalCarbonOutput(self, materials, weight):
+        totalCarbonOutput = 0
+
+        weight = self.convertToKg(weight[0], weight[1])
+        proportion = weight/len(materials)
+        lowestFactors = self.getLowestFactors(materials)
+        
+        for material in lowestFactors:
+            totalCarbonOutput += float(lowestFactors[material]) * proportion
+        return totalCarbonOutput  # in kg
 
 
-def getLowestFactors(materials):
-    materialEmissionFactors = {}
-
-    # Get the lowest factor for each material
-    for material in materials:
-        material = material.lower()
-        materialFactor = math.inf
-        for index, row in rawData_df.iterrows():
-            if material in row['Category 3'].lower() or material in row['Title'].lower():
-                # Convert units to kg
-                match row['Unit']:
-                    case 'lb':
-                        row['Emission Factor'] = row['Emission Factor'] * lbPerKg
-                    case 'kwh':
-                        row['Emission Factor'] = row['Emission Factor'] * kWhperKg
-                    case 'L':
-                        row['Emission Factor'] = row['Emission Factor'] * LperKg
-                    case 'tonne':
-                        row['Emission Factor'] = row['Emission Factor'] * tonnePerKg
-                    case 'ton':
-                        row['Emission Factor'] = row['Emission Factor'] * tonnePerKg
-                    case 'm3':
-                        row['Emission Factor'] = row['Emission Factor'] * m3PerKg
-
-                # Replace emisssion factor if it is lower
-                if float(row['Emission Factor']) < materialFactor:
-                    materialFactor = row['Emission Factor']
-        materialEmissionFactors[material] = materialFactor
-
-    # If the item is not found, tack the lowest emission factor to it
-    for item in materialEmissionFactors:
-        if materialEmissionFactors[item] == math.inf:
-            materialEmissionFactors[item] = min(
-                materialEmissionFactors.values())
-
-    return materialEmissionFactors
+    def getCarbonOffsetPrice(self, materials, weight, delivery):
+        carbonOutput = self.getTotalCarbonOutput(materials, weight) * pricePerCO2kg
+        return carbonOutput
+        # TODO: (distance, method) = delivery
 
 
-def getTotalCarbonOutput(materials, weight):
-    totalCarbonOutput = 0
-    proportion = weight/len(materials)
-    lowestFactors = getLowestFactors(materials)
-
-    for material in lowestFactors:
-        totalCarbonOutput += float(lowestFactors[material]) * proportion
-    return totalCarbonOutput  # in kg
-
-
-def getCarbonOffsetPrice(materials, weight, delivery):
-    carbonOutput = getTotalCarbonOutput(materials, weight) * pricePerCO2kg
-    return carbonOutput
-    # (distance, method) = delivery
-
-
-def main(input):
-    # input = {materials: [wood, aluminum, plastic], weight : 15kg, TODO: delivery: (distance, method)}
-
-    return f'${getCarbonOffsetPrice(input[0], input[1], input[2]):.2f}'
+    def main(self, input):
+        # input = {materials: [wood, aluminum, plastic], weight : ('kg', 15), TODO: delivery: (distance, method)}
+        return f'${self.getCarbonOffsetPrice(input[0], input[1], input[2]):.2f}'
 
 
 if __name__ == '__main__':
+    dataModel = DataModel()
     print(
-        main([['Biodiesel (kWh)', 'Fuel oil (liter)', 'Tap water', 'Chloroacetic acid, C2H3ClO2'], 100, (100, 'car')]))
-    print(rawData_df)
+        dataModel.main([['Biodiesel (kWh)', 'Fuel oil (liter)', 'Tap water', 'Chloroacetic acid, C2H3ClO2'], ('pounds',100), (100, 'car')]))
+    # print(rawData_df)

@@ -1,24 +1,29 @@
-from enum import Enum
-
 # TODO: flask routing
+import sys
+import json
+from dataModel import DataModel
 from flask import Flask
+from flask import request
 app = Flask(__name__)
-
-class LivingArea(Enum):
-    ''' area : avg miles per stop '''
-    rural    = 4 # TODO: define more encompassing nums
-    suburban = 2
-    urban    = 1
-
-    def __str__(self):
-        return f'For a(n) {self.name} community, Amazon drives an average of {self.value} mile(s) per stop.'
+# b'{\r\n    "input": ["materials": ["Biodiesel (kWh)", "Fuel oil (liter)", "Tap water", "Chloroacetic acid, C2H3ClO2"], "weight": ["ounces",100], [100, "car"]]\r\n}'
+# {'input': [['Biodiesel (kWh)', 'Fuel oil (liter)', 'Tap water', 'Chloroacetic acid, C2H3ClO2'], ['ounces', 100], [100, 'car']]}
+# {'input': [['Biodiesel (kWh)', 'Fuel oil (liter)', 'Tap water', 'Chloroacetic acid, C2H3ClO2'], ['ounces', 100], [100, 'car']]}
+@app.route('/', methods = ['POST'])
+def carbonCost():
     
-CO2kgPerMileDriven = .32888 # kg of carbon emissions per 1 mile by Amazon Car :  https://www.cars-data.com/en/mercedes-benz-sprinter/co2-emissions 
-pricePerCO2kg = .02 # $ to offset 1kg : https://www.mercycorps.org/blog/how-much-offset-your-carbon
-
-@app.route("/")
-def predictCO2OffsetPrice(livingArea : Enum, numProducts : int):
-    return pricePerCO2kg*CO2kgPerMileDriven*livingArea.value*numProducts
+    print(json.loads(request.data.decode("utf-8") ))
+    data = json.loads(request.data.decode("utf-8") )
+    print(data['input'])
+    # [['Biodiesel (kWh)', 'Fuel oil (liter)', 'Tap water', 'Chloroacetic acid, C2H3ClO2'], ['ounces', 100], [100, 'car']]
+    dataModel = DataModel()
+    holder = dataModel.main(data['input'])
+    return holder
+    # return 'Hello, World!'
 
 if __name__ == '__main__':
-    print(predictCO2OffsetPrice(LivingArea.urban, 2))
+    app.run(host="localhost", port=8000, debug=True)
+
+
+
+
+
