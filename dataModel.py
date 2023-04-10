@@ -1,6 +1,5 @@
 import pandas as pd
 import math
-
 '''
 TODO:
  goal 1: given a list of materials get the ammount of carbon for each, assume all kg and all materials = weight/len(materials) DONE
