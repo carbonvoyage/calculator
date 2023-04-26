@@ -20,32 +20,35 @@ TODO:
 '''
 
 # https://carbonfund.org/calculation-methods/#:~:text=We%20calculate%20emissions%20from%20electricity,0.371%20kgs%20CO2e%20per%20kWh).
-kgPerLb = 0.45359237 # pounds
-kgPerkWh = 0.371 # kilowatt hours
-kgPerL = 0.85 # liters
-kgPerTon = 907.185 # tons
-kgPerTonne = 1000 # tonnes
-kgPerM3 = 1000 # meters cubed
-kgPerG = 0.001 # grams
-kgPerOz = 0.0283495 # ounces
+kgPerLb = 0.45359237  # pounds
+kgPerkWh = 0.371  # kilowatt hours
+kgPerL = 0.85  # liters
+kgPerTon = 907.185  # tons
+kgPerTonne = 1000  # tonnes
+kgPerM3 = 1000  # meters cubed
+kgPerG = 0.001  # grams
+kgPerOz = 0.0283495  # ounces
 
-kWhperKg = 2.69542 # kilowatt hours
+kWhperKg = 2.69542  # kilowatt hours
 LperKg = 1.47  # liters
 tonnePerKg = 0.001
 m3PerKg = 0.001  # meters cubed
-gPerKg = 1000 # grams
-ozPerKg = 35.274 # ounces
+gPerKg = 1000  # grams
+ozPerKg = 35.274  # ounces
 
 # kg of carbon emissions per 1 mile by Amazon Car :  https://www.cars-data.com/en/mercedes-benz-sprinter/co2-emissions
 CO2kgPerMileDriven = .32888
 # $ to offset 1kg : https://www.mercycorps.org/blog/how-much-offset-your-carbon
 pricePerCO2kg = .02
 
-rawData_df = pd.read_csv("WinnipegData.csv", usecols=['Category 3',
-                                                    'Title',
-                                                    'Unit',
-                                                    'Emission Factor',
-                                                    'Uncertainty'])
+rawData_df = pd.read_csv("data/WinnipegData.csv",
+                         usecols=['Category 3',
+                                  'Title',
+                                  'Unit',
+                                  'Emission Factor',
+                                  'Uncertainty'])
+
+
 class DataModel:
     def convertToKg(self, unit, amount):
         unit = unit.lower()
@@ -95,24 +98,27 @@ class DataModel:
         for material in materials:
             material = material.lower()
             materialFactor = math.inf
-            for index, row in rawData_df.iterrows():
-                if material in row['Category 3'].lower() or material in row['Title'].lower():
+            for _, row in rawData_df.iterrows():
+                if material in row['Category 3'].lower() \
+                        or material in row['Title'].lower():
                     # Convert units to kg
-                    row['Emission Factor'] = self.convertToKg(row['Unit'], row['Emission Factor'])
+                    row['Emission Factor'] = self.convertToKg(
+                        row['Unit'], row['Emission Factor'])
 
                     # Replace emisssion factor if it is lower
                     if float(row['Emission Factor']) <= materialFactor:
                         materialFactor = float(row['Emission Factor'])
                         materialEmissionFactors[material] = materialFactor
-        
+
         # If the item is not found, tack the lowest emission factor to it
         for material in materials:
             if material not in materialEmissionFactors:
                 if len(materialEmissionFactors) > 0:
-                    materialEmissionFactors[material] = (sum(materialEmissionFactors.values())
-                                                /len(materialEmissionFactors))
+                    materialEmissionFactors[material] = (
+                        sum(materialEmissionFactors.values())
+                        / len(materialEmissionFactors))
                 else:
-                    commonEmmissionFactor = 1.2 # random number
+                    commonEmmissionFactor = 1.2  # random number
                     materialEmissionFactors[material] = commonEmmissionFactor
 
         return materialEmissionFactors
@@ -123,25 +129,28 @@ class DataModel:
         weight = self.convertToKg(weight[0], weight[1])
         proportion = weight/len(materials)
         lowestFactors = self.getLowestFactors(materials)
-        
+
         for material in lowestFactors:
             totalCarbonOutput += float(lowestFactors[material]) * proportion
         return totalCarbonOutput  # in kg
 
-
     def getCarbonOffsetPrice(self, materials, weight, delivery):
-        carbonOutput = self.getTotalCarbonOutput(materials, weight) * pricePerCO2kg
+        carbonOutput = self.getTotalCarbonOutput(
+            materials, weight) * pricePerCO2kg
         return carbonOutput
         # TODO: (distance, method) = delivery
 
-
     def main(self, input):
-        # input = {materials: [wood, aluminum, plastic], weight : ('kg', 15), TODO: delivery: (distance, method)}
+        # input = {materials: [wood, aluminum, plastic], weight : ('kg', 15)
+        # TODO: delivery: (distance, method)}
         return f'${self.getCarbonOffsetPrice(input[0], input[1], input[2]):.2f}'
 
 
 if __name__ == '__main__':
     dataModel = DataModel()
     print(
-        dataModel.main([['Biodiesel (kWh)', 'Fuel oil (liter)', 'Tap water', 'Chloroacetic acid, C2H3ClO2'], ('pounds',100), (100, 'car')]))
-    # print(rawData_df)
+        dataModel.main([
+            ['Biodiesel (kWh)', 'Fuel oil (liter)', 'Tap water',
+             'Chloroacetic acid, C2H3ClO2'],
+            ('pounds', 100), (100, 'car')
+        ]))
