@@ -1,5 +1,7 @@
 from enum import Enum
-
+import numpy as np
+import pandas as pd
+from bisect import bisect_left
 
 class LivingArea(Enum):
     ''' area : avg miles per stop '''
@@ -8,8 +10,7 @@ class LivingArea(Enum):
     urban = 1
 
     def __str__(self):
-        return f'For a(n) {self.name} community, Amazon drives an average \
-            of {self.value} mile(s) per stop.'
+        return f'For a(n) {self.name} community, Amazon drives an average of {self.value} mile(s) per stop.'
 
 
 # kg of carbon emissions per 1 mile by Amazon Car :  https://www.cars-data.com/en/mercedes-benz-sprinter/co2-emissions
@@ -17,10 +18,34 @@ CO2kgPerMileDriven = .32888
 # $ to offset 1kg : https://www.mercycorps.org/blog/how-much-offset-your-carbon
 pricePerCO2kg = .02
 
+popData = pd.read_csv("data/popData.csv", usecols=['ZipCode', 'Population', 'LivingArea'], converters={'ZipCode': str})
+def determineLivingAreas():
+    '''
+        BE CAREFUL: Modifies the actual dataset.
+    '''
+    livingArea = []
+    count = 0
+    for row in popData.iterrows():
+        if popData['Population'][row[0]] > 5000:
+            livingArea.append('urban')
+        elif popData['Population'][row[0]] < 2500:
+            livingArea.append('rural')
+        else:
+            livingArea.append('suburban')
+        if count%1000 == 0:
+            print(count)
+        count += 1
+    popData['LivingArea'] = livingArea
+    popData.to_csv('./data/popData.csv', index=False)
 
 def predictCO2OffsetPrice(livingArea: Enum, numProducts: int):
     return pricePerCO2kg*CO2kgPerMileDriven*livingArea.value*numProducts
 
+def getLivingArea(zipCode):
+    index = bisect_left(popData['ZipCode'], zipCode)
+    return popData['LivingArea'][index]
 
 if __name__ == '__main__':
-    print(predictCO2OffsetPrice(LivingArea.urban, 2))
+    zipCode = '99820'
+    livingArea = LivingArea[getLivingArea(zipCode)]
+    print(predictCO2OffsetPrice(livingArea,2))
