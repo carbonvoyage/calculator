@@ -1,11 +1,14 @@
 import json
-from dataModel import DataModel
+
 from flask import Flask, request
+from typing import List
+
+from dataModel import DataModel
+from shippingCost import ShippingCost
 
 app = Flask(__name__)
 
 dataModel = DataModel()
-
 
 @app.route('/', methods=['POST'])
 def carbonCost():
@@ -18,10 +21,11 @@ def carbonCost():
     if 'materials' not in data or 'weight' not in data or 'delivery' not in data:
         return "bad request", 400
 
-    materials = data['materials']
-    weight = data['weight']
-    delivery = data['delivery']
+    materials : List[str] = data['materials']
+    weight = data['weight'] # {amount, measurement}
+    delivery = data['delivery'] # {zipCode}
     holder = dataModel.main(materials, weight, delivery)
+    holder['shippingCost'] = ShippingCost(delivery['zipCode'], 1).CO2OffsetPrice
 
     return json.JSONEncoder().encode(holder)
 
@@ -41,6 +45,7 @@ def carbonBulkCost():
         return "bad request", 400
 
     holder = dataModel.mainBulk(data['items'], data['delivery'])
+    holder['shippingCost'] = ShippingCost(data['delivery']['zipCode'], len(data['items'])).CO2OffsetPrice
 
     return holder
 

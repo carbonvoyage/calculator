@@ -38,14 +38,18 @@ def determineLivingAreas():
     popData['LivingArea'] = livingArea
     popData.to_csv('./data/popData.csv', index=False)
 
-def predictCO2OffsetPrice(livingArea: Enum, numProducts: int):
-    return pricePerCO2kg*CO2kgPerMileDriven*livingArea.value*numProducts
+class ShippingCost:
+    def __init__(self, zipCode, numProducts):
+        self.livingArea = LivingArea[self.getLivingArea(zipCode)]
+        self.CO2OffsetPrice = self.predictCO2OffsetPrice(self.livingArea, numProducts)
 
-def getLivingArea(zipCode):
-    index = bisect_left(popData['ZipCode'], zipCode)
-    return popData['LivingArea'][index]
+    def predictCO2OffsetPrice(self, livingArea: Enum, numProducts: int):
+        return pricePerCO2kg*CO2kgPerMileDriven*livingArea.value*numProducts
+
+    def getLivingArea(self, zipCode):
+        index = bisect_left(popData['ZipCode'], zipCode)
+        return popData['LivingArea'][index]
 
 if __name__ == '__main__':
-    zipCode = '99820'
-    livingArea = LivingArea[getLivingArea(zipCode)]
-    print(predictCO2OffsetPrice(livingArea,2))
+    shippingCost = ShippingCost('99820', 2)
+    print(shippingCost.CO2OffsetPrice)
