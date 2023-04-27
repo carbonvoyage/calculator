@@ -50,10 +50,12 @@ rawData_df = pd.read_csv("data/WinnipegData.csv",
 
 
 class DataModel:
-    def convertToKg(self, unit, amount):
-        unit = unit.lower()
-        match unit:
+    def convertToKg(self, measurement, amount):
+        measurement = measurement.lower()
+        match measurement:
             case 'lb':
+                amount = amount * kgPerLb
+            case 'lbs':
                 amount = amount * kgPerLb
             case 'pound':
                 amount = amount * kgPerLb
@@ -88,7 +90,7 @@ class DataModel:
             case 'kg':
                 pass
             case _:
-                print("Unaccounted for unit", unit)
+                print("Unaccounted for measurement", measurement)
         return amount
 
     def getLowestFactors(self, materials):
@@ -101,7 +103,7 @@ class DataModel:
             for _, row in rawData_df.iterrows():
                 if material in row['Category 3'].lower() \
                         or material in row['Title'].lower():
-                    # Convert units to kg
+                    # Convert measurements to kg
                     row['Emission Factor'] = self.convertToKg(
                         row['Unit'], row['Emission Factor'])
 
@@ -118,15 +120,18 @@ class DataModel:
                         sum(materialEmissionFactors.values())
                         / len(materialEmissionFactors))
                 else:
+                    print(f'{material} not found.')
                     commonEmmissionFactor = 1.2  # random number
                     materialEmissionFactors[material] = commonEmmissionFactor
 
         return materialEmissionFactors
 
     def getTotalCarbonOutput(self, materials, weight):
+        if len(materials) == 0:
+            return 0
         totalCarbonOutput = 0
 
-        weight = self.convertToKg(weight[0], weight[1])
+        weight = self.convertToKg(weight['measurment'], weight['amount'])
         proportion = weight/len(materials)
         lowestFactors = self.getLowestFactors(materials)
 
@@ -140,10 +145,23 @@ class DataModel:
         return carbonOutput
         # TODO: (distance, method) = delivery
 
-    def main(self, input):
+    def main(self, materials, weight, delivery):
         # input = {materials: [wood, aluminum, plastic], weight : ('kg', 15)
         # TODO: delivery: (distance, method)}
-        return f'${self.getCarbonOffsetPrice(input[0], input[1], input[2]):.2f}'
+
+        return {
+            "offsetCost":
+                f'${self.getCarbonOffsetPrice(materials, weight, delivery):.2f}'
+        }
+
+    def mainBulk(self, items, delivery):
+        offsetCosts = [self.main(item['materials'],
+                                 item['weight'], delivery) for item in items]
+        totalCost = 0
+        for cost in offsetCosts:
+            totalCost += float(cost['offsetCost'][1:])
+
+        return {"offsetCost": f'${totalCost:.2f}'}
 
 
 if __name__ == '__main__':
