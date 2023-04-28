@@ -161,7 +161,7 @@ class DataModel:
         for cost in offsetCosts:
             totalCost += float(cost['offsetCost'][1:])
 
-        return {"offsetCost": f'${totalCost:.2f}'}
+        return {"totalOffsetCost": f'${totalCost:.2f}', "items": offsetCosts}
 
 
 if __name__ == '__main__':
