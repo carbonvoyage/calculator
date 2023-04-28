@@ -1,5 +1,7 @@
 import pandas as pd
 import math
+# TODO Get average value from datatable
+
 '''
 TODO:
  goal 1: given a list of materials get the ammount of carbon for each, assume all kg and all materials = weight/len(materials) DONE
@@ -116,22 +118,26 @@ class DataModel:
         for material in materials:
             if material not in materialEmissionFactors:
                 if len(materialEmissionFactors) > 0:
+                    print("please show up")
+
                     materialEmissionFactors[material] = (
                         sum(materialEmissionFactors.values())
                         / len(materialEmissionFactors))
+                    print(materialEmissionFactors)
                 else:
                     print(f'{material} not found.')
-                    commonEmmissionFactor = 1.2  # random number
+                    commonEmmissionFactor = 5.44  # random number
                     materialEmissionFactors[material] = commonEmmissionFactor
 
         return materialEmissionFactors
 
     def getTotalCarbonOutput(self, materials, weight):
         if len(materials) == 0:
-            return 0
-        totalCarbonOutput = 0
-
+            weight = self.convertToKg(weight['measurment'], weight['amount'])
+            return weight * 5.44
         weight = self.convertToKg(weight['measurment'], weight['amount'])
+
+        totalCarbonOutput = 0
         proportion = weight/len(materials)
         lowestFactors = self.getLowestFactors(materials)
 
